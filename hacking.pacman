@@ -4,7 +4,6 @@ fish
 make
 tmux
 rxvt-unicode
-
 cabal-install
 clang
 clang-analyzer
@@ -15,7 +14,6 @@ gcc-libs
 ghc
 go
 graphviz
-jslint
 lua
 mono
 nodejs
