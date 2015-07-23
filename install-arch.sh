@@ -109,12 +109,12 @@ configure() {
   echo -e "KEYMAP=us\nFONT=Lat2-Terminus16\n" > /etc/vconsole.conf
 
   # Install relevant utilities so that we can do things on next boot
-  pacman -S --noconfirm vim connman wpa_supplicant
+  pacman -S --noconfirm connman wpa_supplicant
   systemctl enable connman
 
   # configure mkinitpcio
   echo "Replace base and udev with systemd, place sd-lvm2 between block and filesystems and insert sd-vconsole."
-  vim /etc/mkinitcpio.conf
+  vi /etc/mkinitcpio.conf
   mkinitcpio -p linux
 
   # Bootloader
