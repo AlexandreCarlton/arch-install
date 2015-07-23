@@ -24,8 +24,8 @@ SWAP_PARTITION="/dev/$VOL_GROUP/$LVM_SWAP"
 
 SERVER=http://ftp.iinet.net.au/pub/archlinux/\$repo/os/\$arch
 
-HOSTNAME=absol
-USERNAME=alexandre # Our regular user
+hostname=absol
+username=alexandre # Our regular user
 #}}}
 
 ## Start
@@ -127,7 +127,7 @@ configure() {
 
   # Add normal user with sudo access
   pacman -S --noconfirm zsh
-  useradd -m -G wheel -s /bin/zsh $USERNAME
+  useradd -m -G wheel -s /bin/zsh alexandre
   passwd alexandre
   echo "Uncomment the wheel line."
   visudo
@@ -135,8 +135,8 @@ configure() {
   pacman -S --noconfirm git
   git clone git://github.com/AlexandreCarlton/arch-install.git arch-install
   pacman -S --noconfirm $(cat arch-install/*.pacman)
-  su -c $USERNAME build_aur aura-bin
-  su -c $USERNAME aura -A --noconfirm $(cat arch-install/*.aur)
+  su alexandre -c "build_aur aura-bin"
+  su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
 
   #TODO: copy across /etc files (e.g. pacman.conf, etc.)
 
@@ -152,7 +152,7 @@ pacstrap_system
 generate_fstab
 
 export -f configure build_aur
-export HOSTNAME
-export USERNAME
+export hostname
+export username
 arch-chroot /mnt /bin/bash -c "configure"
 # Need to install aura-bin but not as root.
