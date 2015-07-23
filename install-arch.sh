@@ -130,7 +130,7 @@ configure() {
   useradd -m -G wheel -s /bin/zsh alexandre
   passwd alexandre
   echo "Uncomment the wheel line."
-  visudo
+  EDITOR=vi visudo
 
   
   pacman -S --noconfirm git
