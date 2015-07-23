@@ -132,13 +132,16 @@ configure() {
   echo "Uncomment the wheel line."
   visudo
 
+  
   pacman -S --noconfirm git
-  git clone git://github.com/AlexandreCarlton/arch-install.git arch-install
-  pacman -S --noconfirm $(cat arch-install/*.pacman)
-  su alexandre -c "build_aur aura-bin"
-  su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
+  su - alexandre -c "git clone git://github.com/AlexandreCarlton/arch-install.git .arch-install"
+  pacman -S --needed --noconfirm $(cat /home/alexandre/.arch-install/*.pacman)
+  su - alexandre -c "git clone git://github.com/AlexandreCarlton/dotfiles.git .dotfiles"
+  su - alexandre -c "cd .dotfiles && git submodule update --init --remote --recursive"
+  su - alexandre -c "cd .dotfiles && stow vim && stow systemd && stow bspwm && stow binaries && stow status && stow zsh"
+  #su alexandre -c "build_aur aura-bin"
+  #su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
 
-  #TODO: copy across /etc files (e.g. pacman.conf, etc.)
 
 }
 
