@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Complete set up of Arch.
 # First use wifi-menu to connect to the internet, then execute:
@@ -135,17 +135,25 @@ configure() {
   
   pacman -S --noconfirm git
   su - alexandre -c "git clone git://github.com/AlexandreCarlton/arch-install.git .arch-install"
+  
+  # Install
+  cd /home/alexandre/.arch-install/system_config
+  for dir in $(find . -type d | cut -c2- ); do
+    mkdir -p $dir
+  done
+  for file in $(find . -type f | cut -c2- ); do
+    cp .$file $file
+  done
   pacman -S --needed --noconfirm $(cat /home/alexandre/.arch-install/*.pacman)
+  cd
+  
   su - alexandre -c "git clone git://github.com/AlexandreCarlton/dotfiles.git .dotfiles"
   su - alexandre -c "cd .dotfiles && git submodule update --init --remote --recursive"
   su - alexandre -c "cd .dotfiles && stow vim && stow systemd && stow bspwm && stow binaries && stow status && stow zsh"
   #su alexandre -c "build_aur aura-bin"
   #su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
 
-  cd /home/alexandre/.arch-install/system_config
-  for file in $(find . -type f | cut -c2- ); do
-    cp .$file $file
-  done
+  
 
 }
 
