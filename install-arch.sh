@@ -142,6 +142,10 @@ configure() {
   #su alexandre -c "build_aur aura-bin"
   #su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
 
+  cd /home/alexandre/.arch-install/system_config
+  for file in $(find . -type f | cut -c2- ); do
+    cp .$file $file
+  done
 
 }
 
