@@ -134,9 +134,9 @@ configure() {
 
   pacman -S --noconfirm git
   git clone git://github.com/AlexandreCarlton/arch-install.git arch-install
-  pacman -S --noconfirm $(cat "arch-install/*.pacman")
+  pacman -S --noconfirm $(cat arch-install/*.pacman)
   su -c $USERNAME build_aur aura-bin
-  su -c $USERNAME aura -A --noconfirm $(cat "arch-install/*.aur")
+  su -c $USERNAME aura -A --noconfirm $(cat arch-install/*.aur)
 
   #TODO: copy across /etc files (e.g. pacman.conf, etc.)
 
