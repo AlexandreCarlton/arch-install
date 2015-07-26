@@ -5,7 +5,6 @@
 # sh <(curl -L http://goo.gl/<keys>)
 
 
-
 # Constants {{{
 DEVICE=/dev/sda
 BOOT_PARTITION="${DEVICE}1"
@@ -83,22 +82,6 @@ generate_fstab() {
   genfstab -L -p /mnt >> /mnt/etc/fstab
 }
 
-build_aur() {
-  package=$1
-  index=$(echo $package | cut -c1-2)
-  tarball=${package}.tar.gz
-
-  wget "https://aur4.archlinux.org/packages/$index/$package/$tarball"
-  tar -xzvf "$tarball"
-  cd "~/$package"
-  makepkg -si
-
-  # Clean up
-  cd "~"
-  rm "$tarball"
-  rm -r "$package"
-}
-
 configure() {
   # Set locale, timezone, hostname, font
   sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
@@ -132,11 +115,11 @@ configure() {
   echo "Uncomment the wheel line."
   EDITOR=vi visudo
 
-  
   pacman -S --noconfirm git
   su - alexandre -c "git clone git://github.com/AlexandreCarlton/arch-install.git .arch-install"
-  
-  # Install
+
+  # Install system files
+  # Maybe do this /after/ installing everything? Just copy pacman.conf across then install.
   cd /home/alexandre/.arch-install/system_config
   for dir in $(find . -type d | cut -c2- ); do
     mkdir -p $dir
@@ -144,16 +127,23 @@ configure() {
   for file in $(find . -type f | cut -c2- ); do
     cp .$file $file
   done
+  pacman -Syy
   pacman -S --needed --noconfirm $(cat /home/alexandre/.arch-install/*.pacman)
   cd
-  
+
+  # Weird hack for adding keys to unsigned repositories
+  dirmngr </dev/null
+  # TODO Add keys with -r, verify with -f, locally sign with --lsign-key
+  #pacman-key -r <KEY>
+  #pacman-key --lsign-key <KEY>
+
+  # TODO: powertop here?
+
   su - alexandre -c "git clone git://github.com/AlexandreCarlton/dotfiles.git .dotfiles"
   su - alexandre -c "cd .dotfiles && git submodule update --init --remote --recursive"
   su - alexandre -c "cd .dotfiles && stow vim && stow systemd && stow bspwm && stow binaries && stow status && stow zsh"
   #su alexandre -c "build_aur aura-bin"
   #su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
-
-  
 
 }
 
