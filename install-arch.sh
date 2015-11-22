@@ -1,9 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+
+## TODO:
+## Switch to btrfs and use LUKS
+## Boot partition is BIOS/UEFI, the rest is LUKS/btrfs.
 
 # Complete set up of Arch.
-# First use wifi-menu to connect to the internet, then execute:
+# First use wifi-menu to connect to the internet, then:
 # sh <(curl -L http://goo.gl/<keys>)
-
 
 # Constants {{{
 DEVICE=/dev/sda
@@ -44,8 +48,9 @@ partition_filesystem() {
 
 # LVM
 create_lvm() {
-  pvcreate $LVM_PARTITION
-  vgcreate $VOL_GROUP $LVM_PARTITION
+  lvm_partition=$1
+  pvcreate $lvm_partition
+  vgcreate $VOL_GROUP $lvm_partition
   lvcreate -L 20G $VOL_GROUP -n $LVM_ROOT
   lvcreate -L 12G $VOL_GROUP -n $LVM_VAR
   lvcreate -L 2G $VOL_GROUP -n $LVM_SWAP
@@ -74,90 +79,23 @@ mount_partitions() {
 }
 
 pacstrap_system() {
-  sed -i "7i Server = $SERVER\n" /etc/pacman.d/mirrorlist
-  pacstrap /mnt base base-devel
+  sed -i "1i Server = $SERVER\n" /etc/pacman.d/mirrorlist
+  pacstrap /mnt base base-devel btrfs-progs
 }
 
 generate_fstab() {
   genfstab -L -p /mnt >> /mnt/etc/fstab
 }
 
-configure() {
-  # Set locale, timezone, hostname, font
-  sed -i 's/#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
-  locale-gen
-  systemd-firstboot --locale="en_US.UTF-8"
-  systemd-firstboot --timezone="Australia/Sydney"
-  systemd-firstboot --hostname="absol"
-  echo -e "KEYMAP=us\nFONT=Lat2-Terminus16\n" > /etc/vconsole.conf
-
-  # Install relevant utilities so that we can do things on next boot
-  pacman -S --noconfirm connman wpa_supplicant
-  systemctl enable connman
-
-  # configure mkinitpcio
-  echo "Replace base and udev with systemd, place sd-lvm2 between block and filesystems and insert sd-vconsole."
-  vi /etc/mkinitcpio.conf
-  mkinitcpio -p linux
-
-  # Bootloader
-  pacman -S --noconfirm syslinux gptfdisk
-  syslinux-install_update -i -a -m
-  sed -i 's:/dev/sda3:/dev/disk/by-label/root:g' /boot/syslinux/syslinux.cfg
-
-  # Root password
-  passwd
-
-  # Add normal user with sudo access
-  pacman -S --noconfirm zsh
-  useradd -m -G wheel -s /bin/zsh alexandre
-  passwd alexandre
-  echo "Uncomment the wheel line."
-  EDITOR=vi visudo
-
-  pacman -S --noconfirm git
-  su - alexandre -c "git clone git://github.com/AlexandreCarlton/arch-install.git .arch-install"
-
-  # Install system files
-  # Maybe do this /after/ installing everything? Just copy pacman.conf across then install.
-  cd /home/alexandre/.arch-install/system_config
-  for dir in $(find . -type d | cut -c2- ); do
-    mkdir -p $dir
-  done
-  for file in $(find . -type f | cut -c2- ); do
-    cp .$file $file
-  done
-  pacman -Syy
-  pacman -S --needed --noconfirm $(cat /home/alexandre/.arch-install/*.pacman)
-  cd
-
-  # Weird hack for adding keys to unsigned repositories
-  dirmngr </dev/null
-  # TODO Add keys with -r, verify with -f, locally sign with --lsign-key
-  #pacman-key -r <KEY>
-  #pacman-key --lsign-key <KEY>
-
-  # TODO: powertop here?
-
-  su - alexandre -c "git clone git://github.com/AlexandreCarlton/dotfiles.git .dotfiles"
-  su - alexandre -c "cd .dotfiles && git submodule update --init --remote --recursive"
-  su - alexandre -c "cd .dotfiles && stow vim && stow systemd && stow bspwm && stow binaries && stow status && stow zsh"
-  #su alexandre -c "build_aur aura-bin"
-  #su alexandre -c "aura -A --noconfirm $(cat arch-install/*.aur)"
-
-}
-
 # Execute!
 destroy_lvm
 partition_filesystem
-create_lvm
+create_lvm "$LVM_PARTITION"
 format_partitions
 mount_partitions
 pacstrap_system
 generate_fstab
 
-export -f configure build_aur
-export hostname
-export username
-arch-chroot /mnt /bin/bash -c "configure"
-# Need to install aura-bin but not as root.
+
+# OR: Just have another script, and do arch-crhoot /mnt /bin/bash < chroot.sh
+arch-chroot /mnt /bin/bash < chroot.sh
